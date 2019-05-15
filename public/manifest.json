@@ -1,6 +1,6 @@
 {
-  "name": "schuum_app",
-  "short_name": "schuum_app",
+  "name": "Schuum",
+  "short_name": "Schuum",
   "icons": [
     {
       "src": "./img/icons/android-chrome-192x192.png",
@@ -15,6 +15,6 @@
   ],
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#4DBA87"
+  "background_color": "#f0c40f",
+  "theme_color": "#f0c40f"
 }
