@@ -1,121 +1,197 @@
 <template>
   <v-layout>
     <v-flex>
-      <div v-if="this.windowH > 650">
-        <v-sheet height="600">
-          <v-calendar :now="today" :value="today" color="primary" :weekdays="weekdays">
-            <template v-slot:day="{ date }">
-              <template v-for="event in eventsMap[date]">
-                <v-menu :key="event.title" v-model="event.open" full-width offset-x>
-                  <template v-slot:activator="{ on }">
-                    <div
-                      v-if="!event.time"
-                      v-ripple
-                      class="my-event"
-                      v-on="on"
-                      v-html="event.title"
-                    ></div>
-                  </template>
-                  <v-card color="grey lighten-4" min-width="350px" flat>
-                    <v-toolbar color="primary" dark>
-                      <v-btn icon>
-                        <v-icon>edit</v-icon>
-                      </v-btn>
-                      <v-toolbar-title v-html="event.title"></v-toolbar-title>
-                      <v-spacer></v-spacer>
-                      <v-btn icon>
-                        <v-icon>favorite</v-icon>
-                      </v-btn>
-                      <v-btn icon>
-                        <v-icon>more_vert</v-icon>
-                      </v-btn>
-                    </v-toolbar>
-                    <v-card-title primary-title>
-                      <span v-html="event.details"></span>
-                    </v-card-title>
-                    <v-card-actions>
-                      <v-btn flat color="secondary">Cancel</v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-menu>
-              </template>
-            </template>
-          </v-calendar>
-        </v-sheet>
-      </div>
-      <div v-else>
-        <v-sheet height="400">
-          <v-calendar
-            ref="calendar"
-            v-model="start"
-            :type="type"
-            :end="end"
-            color="primary"
-            :weekdays="weekdays"
-          ></v-calendar>
-        </v-sheet>
-      </div>
+      <FullCalendar
+        class="demo-app-calendar"
+        ref="fullCalendar"
+        defaultView="dayGridMonth"
+        :header="{
+      left: 'prev',
+      center: 'title',
+      right: 'next'
+      }"
+        :plugins="calendarPlugins"
+        :events="calendarEvents"
+        @dateClick="handleDateClick"
+        :firstDay="1"
+        height="parent"
+      />
     </v-flex>
+    <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition">
+      <v-card>
+        <v-toolbar dark color="primary">
+          <v-btn icon dark @click="dialog = false">
+            <v-icon>close</v-icon>
+          </v-btn>
+          <v-toolbar-title>New Event</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+            <v-btn dark flat @click="addEvent()">Save</v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
+        <v-list three-line subheader>
+          <v-list-tile avatar>
+            <v-text-field
+              prepend-icon="event"
+              name="login"
+              label="Event"
+              type="text"
+              v-model="event.title"
+              @keyup.enter="login()"
+            ></v-text-field>
+          </v-list-tile>
+          <v-list-tile avatar>
+            <v-menu
+              ref="menu1"
+              v-model="menu1"
+              :close-on-content-click="false"
+              :nudge-right="40"
+              lazy
+              transition="scale-transition"
+              offset-y
+              full-width
+              max-width="290px"
+              min-width="290px"
+            >
+              <template v-slot:activator="{ on }">
+                <v-text-field
+                  v-model="dateFormatted"
+                  label="Anfangsdatum"
+                  persistent-hint
+                  prepend-icon="event"
+                  @blur="date = parseDate(dateFormatted)"
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker v-model="date" no-title @input="menu1 = false"></v-date-picker>
+            </v-menu>
+          </v-list-tile>
+          <v-list-tile avatar>
+            <v-menu
+              ref="menu"
+              v-model="menu2"
+              :close-on-content-click="false"
+              :nudge-right="40"
+              :return-value.sync="endDate"
+              lazy
+              transition="scale-transition"
+              offset-y
+              full-width
+              min-width="290px"
+            >
+              <template v-slot:activator="{ on }">
+                <v-text-field
+                  v-model="endDate"
+                  label="Enddatum"
+                  prepend-icon="event"
+                  readonly
+                  v-on="on"
+                ></v-text-field>
+              </template>
+              <v-date-picker v-model="endDate" no-title scrollable>
+                <v-spacer></v-spacer>
+                <v-btn flat color="primary" @click="menu = false">Cancel</v-btn>
+                <v-btn flat color="primary" @click="$refs.menu.save(endDate)">OK</v-btn>
+              </v-date-picker>
+            </v-menu>
+          </v-list-tile>
+          <v-list-tile avatar>
+            <v-select
+              v-model="event.backgroundColor"
+              :items="colors"
+              item-text="label"
+              menu-props="auto"
+              label="Farbe"
+              prepend-icon="colorize"
+              single-line
+            ></v-select>
+          </v-list-tile>
+        </v-list>
+      </v-card>
+    </v-dialog>
   </v-layout>
 </template>
 
 
 <script>
+import FullCalendar from "@fullcalendar/vue";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
 export default {
-  data: () => ({
-    today: "2019-01-08",
-    windowHeight: screen.height,
-    windowH: screen.height,
-    weekdays: [1, 2, 3, 4, 5, 6, 0],
-    type: "week",
-    start: "2019-01-05",
-    end: "2019-01-06",
-    typeOptions: [
-      { text: "Day", value: "day" },
-      { text: "4 Day", value: "4day" },
-      { text: "Week", value: "week" },
-      { text: "Month", value: "month" },
-      { text: "Custom Daily", value: "custom-daily" },
-      { text: "Custom Weekly", value: "custom-weekly" }
+  components: {
+    FullCalendar
+  },
+  data: vm => ({
+    calendarPlugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+    windowH: "",
+    windowHeight: "",
+    calendarEvents: [
+      { title: "event 1", date: "2019-06-01" },
+      { title: "event 2", date: "2019-06-09" }
     ],
-    events: [
-      {
-        title: "Vacation",
-        details: "Going to the beach!",
-        date: "2018-12-30",
-        open: true
-      },
-      {
-        title: "Vacation",
-        details: "Going to the beach!",
-        date: "2018-12-31",
-        open: false
-      },
-      {
-        title: "Vacation",
-        details: "Going to the beach!",
-        date: "2019-01-01",
-        open: false
-      }
+    dialog: false,
+    event: {
+      title: "",
+      start: "",
+      end: "",
+      backgroundColor: "#3F51B5",
+      allDay: true
+    },
+    date: new Date().toISOString().substr(0, 10),
+    dateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+    menu1: false,
+    menu2: false,
+    colors: [
+      { label: "Rot", hex: "#F44336" },
+      { label: "Orange", hex: "#FF5722" },
+      { label: "Pink", hex: "#E91E63" },
+      { label: "Violett", hex: "#9C27B0" },
+      { label: "Indigo", hex: "#3F51B5" },
+      { label: "Blaugrün", hex: "#009688" }
     ]
   }),
   methods: {
-    open(event) {
-      alert(event.title);
+    handleDateClick(arg) {
+      this.dialog = true;
+    },
+    addEvent: function() {
+      this.calendarEvents.push({
+        title: this.event.title,
+        date: this.event.start,
+        end: this.event.end,
+        backgroundColor: this.event.backgroundColor,
+        allDay: this.event.allDay
+      });
+      this.dialog = false;
+      console.log(this.calendarEvents);
+    },
+    formatDate(date) {
+      if (!date) return null;
+
+      const [year, month, day] = date.split("-");
+      return `${month}/${day}/${year}`;
+    },
+    parseDate(date) {
+      if (!date) return null;
+
+      const [month, day, year] = date.split("/");
+      return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
     }
   },
   computed: {
-    // convert the list of events into a map of lists keyed by date
-    eventsMap() {
-      const map = {};
-      this.events.forEach(e => (map[e.date] = map[e.date] || []).push(e));
-      return map;
+    computedDateFormatted() {
+      return this.formatDate(this.date);
     }
   },
   watch: {
     windowHeight(newHeight, oldHeight) {
       this.windowH = newHeight;
       this.$router.go("/calendar");
+    },
+    date(val) {
+      this.dateFormatted = this.formatDate(this.date);
     }
   },
   mounted() {
@@ -129,18 +205,11 @@ export default {
 </script>
 
 <style scoped>
-.my-event {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border-radius: 2px;
-  background-color: #1867c0;
-  color: #ffffff;
-  border: 1px solid #1867c0;
-  width: 100%;
-  font-size: 12px;
-  padding: 3px;
-  cursor: pointer;
-  margin-bottom: 1px;
+@import "~@fullcalendar/core/main.css";
+@import "~@fullcalendar/daygrid/main.css";
+@import "~@fullcalendar/timegrid/main.css";
+
+.demo-app-calendar {
+  height: 80vh;
 }
 </style>

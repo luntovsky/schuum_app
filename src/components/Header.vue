@@ -12,7 +12,7 @@
       <v-card>
         <v-toolbar color="#f0c40f" dark flat>
           <v-toolbar-side-icon class="black--text" @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-          <v-toolbar-title class="black--text">Übersicht</v-toolbar-title>
+          <v-toolbar-title class="black--text">Title</v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn icon>
             <v-icon class="black--text">search</v-icon>
@@ -35,10 +35,10 @@
           <v-divider></v-divider>
 
           <v-list-tile v-for="item in items" :key="item.title" v-ripple>
-            <v-list-tile-action>
+            <v-list-tile-action class="pointer">
               <v-icon>{{ item.icon }}</v-icon>
             </v-list-tile-action>
-            <v-list-tile-content>
+            <v-list-tile-content class="pointer">
               <v-list-tile-title>{{ item.title }}</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
@@ -46,11 +46,11 @@
           <div class="push"></div>
 
           <v-list-tile v-ripple="{ class: 'red--text' }">
-            <v-list-tile-action>
+            <v-list-tile-action class="pointer">
               <v-icon>exit_to_app</v-icon>
             </v-list-tile-action>
 
-            <v-list-tile-content>
+            <v-list-tile-content class="pointer">
               <v-list-tile-title>Logout</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
@@ -109,5 +109,9 @@ export default {
 
 .push {
   height: 65.5vh;
+}
+
+.pointer {
+  cursor: pointer !important;
 }
 </style>
