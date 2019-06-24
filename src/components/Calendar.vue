@@ -37,7 +37,6 @@
               label="Event"
               type="text"
               v-model="event.title"
-              @keyup.enter="login()"
             ></v-text-field>
           </v-list-tile>
           <v-list-tile avatar>
@@ -55,44 +54,39 @@
             >
               <template v-slot:activator="{ on }">
                 <v-text-field
-                  v-model="dateFormatted"
+                  v-model="dateFormatted1"
                   label="Anfangsdatum"
-                  persistent-hint
                   prepend-icon="event"
-                  @blur="date = parseDate(dateFormatted)"
+                  @blur="date1 = parseDate(dateFormatted1)"
                   v-on="on"
                 ></v-text-field>
               </template>
-              <v-date-picker v-model="date" no-title @input="menu1 = false"></v-date-picker>
+              <v-date-picker v-model="date1" no-title @input="menu1 = false" first-day-of-week="1"></v-date-picker>
             </v-menu>
           </v-list-tile>
           <v-list-tile avatar>
             <v-menu
-              ref="menu"
+              ref="menu2"
               v-model="menu2"
               :close-on-content-click="false"
               :nudge-right="40"
-              :return-value.sync="endDate"
               lazy
               transition="scale-transition"
               offset-y
               full-width
+              max-width="290px"
               min-width="290px"
             >
               <template v-slot:activator="{ on }">
                 <v-text-field
-                  v-model="endDate"
+                  v-model="dateFormatted2"
                   label="Enddatum"
                   prepend-icon="event"
-                  readonly
+                  @blur="date2 = parseDate(dateFormatted2)"
                   v-on="on"
                 ></v-text-field>
               </template>
-              <v-date-picker v-model="endDate" no-title scrollable>
-                <v-spacer></v-spacer>
-                <v-btn flat color="primary" @click="menu = false">Cancel</v-btn>
-                <v-btn flat color="primary" @click="$refs.menu.save(endDate)">OK</v-btn>
-              </v-date-picker>
+              <v-date-picker v-model="date2" no-title @input="menu2 = false" first-day-of-week="1"></v-date-picker>
             </v-menu>
           </v-list-tile>
           <v-list-tile avatar>
@@ -139,8 +133,12 @@ export default {
       backgroundColor: "#3F51B5",
       allDay: true
     },
-    date: new Date().toISOString().substr(0, 10),
-    dateFormatted: vm.formatDate(new Date().toISOString().substr(0, 10)),
+    date1: new Date().toISOString().substr(0, 10),
+    date2: new Date().toISOString().substr(0, 10),
+
+    dateFormatted1: vm.formatDate(new Date().toISOString().substr(0, 10)),
+    dateFormatted2: vm.formatDate(new Date().toISOString().substr(0, 10)),
+
     menu1: false,
     menu2: false,
     colors: [
@@ -159,8 +157,8 @@ export default {
     addEvent: function() {
       this.calendarEvents.push({
         title: this.event.title,
-        date: this.event.start,
-        end: this.event.end,
+        date: this.date1,
+        end: this.date2,
         backgroundColor: this.event.backgroundColor,
         allDay: this.event.allDay
       });
@@ -182,7 +180,7 @@ export default {
   },
   computed: {
     computedDateFormatted() {
-      return this.formatDate(this.date);
+      return this.formatDate(this.date1, this.date2);
     }
   },
   watch: {
@@ -190,8 +188,11 @@ export default {
       this.windowH = newHeight;
       this.$router.go("/calendar");
     },
-    date(val) {
-      this.dateFormatted = this.formatDate(this.date);
+    date1(val) {
+      this.dateFormatted1 = this.formatDate(this.date1);
+    },
+    date2(val) {
+      this.dateFormatted2 = this.formatDate(this.date2);
     }
   },
   mounted() {
