@@ -15,6 +15,7 @@
         @dateClick="handleDateClick"
         :firstDay="1"
         height="parent"
+        @eventClick="showEvent"
       />
     </v-flex>
     <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition">
@@ -113,6 +114,10 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
+import firebase from "./firebase";
+import { log } from "util";
+let db = firebase.firestore();
+
 export default {
   components: {
     FullCalendar
@@ -122,7 +127,7 @@ export default {
     windowH: "",
     windowHeight: "",
     calendarEvents: [
-      { title: "event 1", date: "2019-06-01" },
+      { title: "event 1", date: "2019-07-01", rendering: "background" },
       { title: "event 2", date: "2019-06-09" }
     ],
     dialog: false,
@@ -154,16 +159,44 @@ export default {
     handleDateClick(arg) {
       this.dialog = true;
     },
+    showEvent: function(info) {
+      console.log(info.event.date);
+      this.event.title = info.event.title;
+      this.date1 = info.event.date;
+      this.date2 = info.event.end;
+      this.event.backgroundColor = info.event.backgroundColor;
+      this.dialog = true;
+    },
     addEvent: function() {
-      this.calendarEvents.push({
-        title: this.event.title,
-        date: this.date1,
-        end: this.date2,
-        backgroundColor: this.event.backgroundColor,
-        allDay: this.event.allDay
-      });
+      db.collection("Events")
+        .add({
+          title: this.event.title,
+          date: this.date1,
+          end: this.date2,
+          backgroundColor: this.event.backgroundColor,
+          eventBorderColor: "#FF5722",
+          allDay: this.event.allDay
+        })
+        .then(function(docRef) {
+          console.log("Document written with ID: ", docRef.id);
+        })
+        .catch(function(error) {
+          console.error("Error adding document: ", error);
+        });
       this.dialog = false;
-      console.log(this.calendarEvents);
+      this.clearData();
+    },
+    editEvent: function(eventID) {
+      db.collection("Events")
+        .doc(eventID)
+        .update({
+          title: this.event.title,
+          date: this.date1,
+          end: this.date2,
+          backgroundColor: this.event.backgroundColor,
+          eventBorderColor: "#FF5722",
+          allDay: this.event.allDay
+        });
     },
     formatDate(date) {
       if (!date) return null;
@@ -176,6 +209,9 @@ export default {
 
       const [month, day, year] = date.split("/");
       return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    },
+    clearData: function() {
+      (this.date1 = ""), (this.date2 = ""), (this.event.title = "");
     }
   },
   computed: {
@@ -186,7 +222,6 @@ export default {
   watch: {
     windowHeight(newHeight, oldHeight) {
       this.windowH = newHeight;
-      this.$router.go("/calendar");
     },
     date1(val) {
       this.dateFormatted1 = this.formatDate(this.date1);
@@ -194,6 +229,20 @@ export default {
     date2(val) {
       this.dateFormatted2 = this.formatDate(this.date2);
     }
+  },
+  created() {
+    db.collection("Events").onSnapshot(res => {
+      const changes = res.docChanges();
+
+      changes.forEach(change => {
+        if (change.type === "added") {
+          this.calendarEvents.push({
+            ...change.doc.data()
+          });
+        }
+      });
+    });
+    // console.log(this.calendarEvents);
   },
   mounted() {
     this.$nextTick(() => {
