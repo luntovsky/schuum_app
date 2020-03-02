@@ -1,59 +1,34 @@
 <template>
-  <v-layout
-    row
-    v-touch="{
-      left: () => swipe('Left'),
-      right: () => swipe('Right'),
-      up: () => swipe('Up'),
-      down: () => swipe('Down')
-    }"
-  >
+  <v-layout>
     <v-flex xs12 sm12>
-      <v-card>
-        <v-toolbar color="#f0c40f" dark flat>
-          <v-toolbar-side-icon class="black--text" @click.stop="drawer = !drawer"></v-toolbar-side-icon>
-          <v-toolbar-title class="black--text">Title</v-toolbar-title>
-          <v-spacer></v-spacer>
-          <v-btn icon>
-            <v-icon class="black--text">search</v-icon>
-          </v-btn>
-        </v-toolbar>
-      </v-card>
+      <v-app-bar color="#f0c40f" dense>
+        <v-btn @click.stop="drawer = !drawer" icon>
+          <v-icon>$menu</v-icon>
+        </v-btn>
+        <v-toolbar-title class="font"></v-toolbar-title>
+      </v-app-bar>
     </v-flex>
 
-    <v-layout wrap row>
-      <v-navigation-drawer v-model="drawer" dark absolute temporary>
-        <v-list class="pa-1">
-          <v-list-tile avatar>
-            <v-list-tile-content>
-              <v-list-tile-title>{{username}}</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </v-list>
+    <v-layout>
+      <v-navigation-drawer v-model="drawer" absolute temporary dark>
+        <v-list-item>
+          <v-list-item-content>
+            <v-list-item-title>{{username}}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
 
-        <v-list class="pt-0" dense>
-          <v-divider></v-divider>
+        <v-divider></v-divider>
 
-          <v-list-tile v-for="item in items" :key="item.title" v-ripple>
-            <v-list-tile-action class="pointer">
+        <v-list dense>
+          <v-list-item v-for="item in items" :key="item.title" link @click="goTo(item.location)">
+            <v-list-item-icon>
               <v-icon>{{ item.icon }}</v-icon>
-            </v-list-tile-action>
-            <v-list-tile-content class="pointer">
-              <v-list-tile-title>{{ item.title }}</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
+            </v-list-item-icon>
 
-          <div class="push"></div>
-
-          <v-list-tile v-ripple="{ class: 'red--text' }">
-            <v-list-tile-action class="pointer">
-              <v-icon>exit_to_app</v-icon>
-            </v-list-tile-action>
-
-            <v-list-tile-content class="pointer">
-              <v-list-tile-title>Logout</v-list-tile-title>
-            </v-list-tile-content>
-          </v-list-tile>
+            <v-list-item-content>
+              <v-list-item-title>{{ item.title }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list>
       </v-navigation-drawer>
     </v-layout>
@@ -61,8 +36,6 @@
 </template>
 
 <script>
-import db from "./firebase";
-
 export default {
   name: "Home",
   data() {
@@ -70,19 +43,38 @@ export default {
       test: "",
       swipeDirection: "none",
 
-      username: "Bali",
+      username: this.$store.state.user,
       drawer: null,
+
+      currentPage: this.$store.state.currentPage,
+
       items: [
-        { title: "Home", icon: "dashboard" },
-        { title: "Kalender", icon: "calendar_today" },
-        { title: "Inventar", icon: "storage" }
+        { title: "Home", icon: "dashboard", location: "home" },
+        { title: "Kalender", icon: "calendar_today", location: "calendar" },
+        { title: "Biere", icon: "kitchen", location: "beers" },
+        { title: "Inventar", icon: "storage", location: "inventory" },
+        { title: "Logout", icon: "exit_to_app", location: "logout" }
       ]
     };
   },
   methods: {
-    storeTest: function() {
-      testRef.push({
-        test: this.test
+    goTo: function(location) {
+      if (location === "logout") {
+        this.logout();
+      } else {
+        this.$store.dispatch("setCp", `${location}`);
+        this.$router.push({
+          path: `/${location}`
+        });
+      }
+    },
+    logout: function() {
+      this.$store.dispatch("setUser", null);
+      this.$store.dispatch("setStatus", false);
+      this.$store.dispatch("setCp", null);
+
+      this.$router.go({
+        path: "/login"
       });
     },
     swipe: function(direction) {
@@ -113,5 +105,18 @@ export default {
 
 .pointer {
   cursor: pointer !important;
+}
+
+body {
+  background-color: "#f0c40f";
+}
+
+.font {
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
