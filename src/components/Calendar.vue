@@ -331,7 +331,15 @@ export default {
       this.dateFormatted2 = this.formatDate(this.date2);
     }
   },
-  created() {
+  async created() {
+
+    const products = await db
+      .collection("BeerSorts")
+      .get();
+
+    const json = JSON.stringify(products.docs.map((doc) => ({ ...doc.data() })));
+    console.log(json);
+
     db.collection("Events").onSnapshot(res => {
       const changes = res.docChanges();
 
