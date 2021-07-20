@@ -1,5 +1,8 @@
 # schuum_app
 
+## About
+Lagerveraltungstool der [Brauerei Schuum](http://www.schuum.ch/). 
+
 ## Project setup
 ```
 npm install
@@ -27,3 +30,6 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+
