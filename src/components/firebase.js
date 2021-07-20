@@ -3,7 +3,7 @@ const firebase = require("firebase/app");
 require("firebase/firestore");
 
 export default firebase.initializeApp({
-    apiKey: "AIzaSyAo1Y3A-wuI-6vYQltmbkfv2l5A1pobPSA",
+    apiKey: APIKEY,
     authDomain: "schuumapp.firebaseapp.com",
     databaseURL: "https://schuumapp.firebaseio.com",
     projectId: "schuumapp",
